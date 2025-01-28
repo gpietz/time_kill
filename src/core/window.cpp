@@ -111,4 +111,8 @@ namespace time_kill::core {
     bool Window::isVulkanSupported() const {
         return vulkanSupported_;
     }
+
+    void Window::getFramebufferSize(int& width, int& height) const {
+        glfwGetFramebufferSize(window_.get(), &width, &height);
+    }
 }

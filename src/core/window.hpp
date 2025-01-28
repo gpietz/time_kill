@@ -59,6 +59,9 @@ namespace time_kill::core {
         // Check if the window has VULKAN support
         [[nodiscard]] bool isVulkanSupported() const;
 
+        // Retrieves the framebuffer dimensions.
+        void getFramebufferSize(int& width, int& height) const;
+
     private:
         friend class graphics::VulkanContext;
 

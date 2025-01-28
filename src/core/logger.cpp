@@ -30,8 +30,8 @@ namespace time_kill::core {
         debugLoggingEnabled_ = debugLoggingEnabled;
     }
 
-    void Logger::log(const LogLevel level, const String &message) {
-        if (level == LogLevel::DEBUG && !debugLoggingEnabled_) {
+    void Logger::log(const LogLevel level, const String& message) {
+        if ((level == LogLevel::DEBUG && !debugLoggingEnabled_) || (level == LogLevel::TRACE && !traceLoggingEnabled_)) {
             return;
         }
 
@@ -45,6 +45,10 @@ namespace time_kill::core {
         if (logFile_.is_open()) {
             logFile_ << logMessage << "\n";
         }
+    }
+
+    void Logger::trace(const String &message) {
+        log(LogLevel::TRACE, message);
     }
 
     void Logger::debug(const String &message) {
@@ -69,6 +73,14 @@ namespace time_kill::core {
 
     bool Logger::isDebugEnabled() const {
         return debugLoggingEnabled_;
+    }
+
+    void Logger::setTraceEnabled(const bool enabled) {
+        traceLoggingEnabled_ = enabled;
+    }
+
+    bool Logger::isTraceEnabled() const {
+        return traceLoggingEnabled_;
     }
 
     void Logger::setDateFormat(const DateFormat format) {
@@ -142,6 +154,7 @@ namespace time_kill::core {
 
     String Logger::levelToString(const LogLevel level) {
         switch (level) {
+            case LogLevel::TRACE: return "TRACE";
             case LogLevel::DEBUG: return "DEBUG";
             case LogLevel::INFO:  return "INFO ";
             case LogLevel::WARN:  return "WARN ";

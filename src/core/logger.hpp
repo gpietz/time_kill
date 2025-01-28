@@ -6,6 +6,7 @@
 
 namespace time_kill::core {
     enum class LogLevel {
+        TRACE,
         DEBUG,
         INFO,
         WARN,
@@ -34,6 +35,7 @@ namespace time_kill::core {
 
         // Logging methods
         void log(LogLevel level, const String& message);
+        void trace(const String& message);
         void debug(const String& message);
         void info(const String& message);
         void warn(const String& message);
@@ -42,6 +44,10 @@ namespace time_kill::core {
         // Debug logging
         void setDebugEnabled(bool enabled);
         [[nodiscard]] bool isDebugEnabled() const;
+
+        // Trace logging
+        void setTraceEnabled(bool enabled);
+        [[nodiscard]] bool isTraceEnabled() const;
 
         // Dateformat
         void setDateFormat(DateFormat format);
@@ -66,6 +72,7 @@ namespace time_kill::core {
         std::ofstream logFile_;
         std::mutex logMutex_;
         bool debugLoggingEnabled_ = false;
+        bool traceLoggingEnabled_ = false;
         DateFormat dateFormat_ = DateFormat::DD_MM_YYYY;
         DateSeparator dateSeparator_ = DateSeparator::Hyphen;
     };

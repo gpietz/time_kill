@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.30)
+cmake_minimum_required(VERSION 3.16)
 project(TimeKill LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 23)
@@ -13,14 +13,20 @@ FetchContent_Declare(
         GIT_REPOSITORY https://github.com/glfw/glfw.git
         GIT_TAG 3.4
 )
-FetchContent_MakeAvailable(glfw)
+FetchContent_GetProperties(glfw)
+if(NOT glfw_POPULATED)
+    FetchContent_MakeAvailable(glfw)
+endif()
 
 # Find Vulkan SDK (needs to be installed!)
 find_package(Vulkan REQUIRED)
+if (NOT Vulkan_FOUND)
+    message(FATAL_ERROR "Vulkan SDK not found. Please install Vulkan SDK.")
+endif()
 
 # Export library targets
-set(GLFW_LIB glfw)
-set(VULKAN_LIB Vulkan::Vulkan)
+set(GLFW_LIB glfw CACHE INTERNAL "GLFW library target")
+set(VULKAN_LIB Vulkan::Vulkan CACHE INTERNAL "Vulkan library target")
 
 # Debug Logging (Optional)
 option(ENABLE_DEBUG_LOGGING "Enable debug logging" OFF)

@@ -16,46 +16,52 @@ const std::vector<const char*> DeviceExtensions = {
 
 namespace time_kill::graphics {
     VulkanContext::VulkanContext(const core::Window& window, const bool debugEnabled)
-        : debugEnabled_(debugEnabled), instance_(nullptr), debugMessenger_(nullptr),
-          surface_(nullptr), physicalDevice_(nullptr), logicalDevice_(nullptr),
-          graphicsQueue_(nullptr), presentQueue_(nullptr)
+        : debugEnabled_(debugEnabled), debugMessenger_(nullptr)
     {
         if (!glfwVulkanSupported()) {
             throw std::runtime_error("Vulkan is not supported by GLFW");
         }
+
+        resources_ = std::make_shared<VulkanResources>();
 
         createInstance(window);
         createDebugMessenger(window);
         createSurface(window);
         pickPhysicalDevice(window);
         createLogicalDevice(window);
+
+        swapchain_ = std::make_shared<VulkanSwapchain>();
+        swapchain_->createSwapchain(window, resources_);
     }
 
     VulkanContext::~VulkanContext() {
-        if (logicalDevice_ != nullptr) {
-            queuesWaitIdle();
-            vkDestroyDevice(logicalDevice_, nullptr);
-            logicalDevice_ = nullptr;
-        }
-        if (surface_ != nullptr) {
-            vkDestroySurfaceKHR(instance_, surface_, nullptr);
-            surface_ = nullptr;
-        }
-        if (debugEnabled_ && debugMessenger_ != nullptr) {
-            cleanupDebugMessenger();
-            debugMessenger_ = nullptr;
-        }
-        if (instance_ != nullptr) {
-            vkDestroyInstance(instance_, nullptr);
-            instance_ = nullptr;
-        }
+        // FIXME This must be done in VulkanResources?
+        // if (logicalDevice_ != nullptr) {
+        //     queuesWaitIdle();
+        //     vkDestroyDevice(logicalDevice_, nullptr);
+        //     logicalDevice_ = nullptr;
+        // }
+        // if (surface_ != nullptr) {
+        //     vkDestroySurfaceKHR(instance_, surface_, nullptr);
+        //     surface_ = nullptr;
+        // }
+        // if (debugEnabled_ && debugMessenger_ != nullptr) {
+        //     cleanupDebugMessenger();
+        //     debugMessenger_ = nullptr;
+        // }
+        // if (instance_ != nullptr) {
+        //     vkDestroyInstance(instance_, nullptr);
+        //     instance_ = nullptr;
+        // }
     }
 
     void VulkanContext::queuesWaitIdle() const {
+        const auto res = resources_;
+
         // Wait for the end of all operations in the graphics queue
-        VulkanTools::queueWaitIdle(graphicsQueue_);
+        VulkanTools::queueWaitIdle(res->graphicsQueue);
         // Wait for the end of all operations in the present queue
-        VulkanTools::queueWaitIdle(presentQueue_);
+        VulkanTools::queueWaitIdle(res->presentQueue);
     }
 
     VKAPI_ATTR VkBool32 VKAPI_CALL VulkanContext::debugCallback(
@@ -72,14 +78,16 @@ namespace time_kill::graphics {
         if (!debugEnabled_) {
             return;
         }
-        if (instance_ == nullptr) {
+
+        const auto res = resources_;
+
+        if (res->instance == nullptr) {
             throw std::runtime_error("Vulkan instance is not available!");
         }
 
         // Load the function pointer
-        PFN_vkCreateDebugUtilsMessengerEXT vkCreateDebugUtilsMessengerEXT = nullptr;
-        vkCreateDebugUtilsMessengerEXT = reinterpret_cast<PFN_vkCreateDebugUtilsMessengerEXT>(
-            vkGetInstanceProcAddr(instance_, "vkCreateDebugUtilsMessengerEXT")
+        const auto vkCreateDebugUtilsMessengerEXT = reinterpret_cast<PFN_vkCreateDebugUtilsMessengerEXT>(
+            vkGetInstanceProcAddr(res->instance, "vkCreateDebugUtilsMessengerEXT")
         );
         if (!vkCreateDebugUtilsMessengerEXT) {
             throw std::runtime_error("Failed to load vkCreateDebugUtilsMessengerEXT!");
@@ -96,7 +104,7 @@ namespace time_kill::graphics {
         createInfo.pfnUserCallback = debugCallback;
         createInfo.pUserData = this;
 
-        if (vkCreateDebugUtilsMessengerEXT(instance_, &createInfo, nullptr, &debugMessenger_) != VK_SUCCESS) {
+        if (vkCreateDebugUtilsMessengerEXT(res->instance, &createInfo, nullptr, &debugMessenger_) != VK_SUCCESS) {
             throw std::runtime_error("Failed to create debug messenger!");
         }
 
@@ -104,18 +112,20 @@ namespace time_kill::graphics {
     }
 
     void VulkanContext::cleanupDebugMessenger() {
+        const auto res = resources_;
+
         const auto vkDestroyDebugUtilsMessengerEXT = reinterpret_cast<PFN_vkDestroyDebugUtilsMessengerEXT>(
-            vkGetInstanceProcAddr(instance_, "vkDestroyDebugUtilsMessengerEXT")
+            vkGetInstanceProcAddr(res->instance, "vkDestroyDebugUtilsMessengerEXT")
         );
 
         if (vkDestroyDebugUtilsMessengerEXT != nullptr) {
-            vkDestroyDebugUtilsMessengerEXT(instance_, debugMessenger_, nullptr);
+            vkDestroyDebugUtilsMessengerEXT(res->instance, debugMessenger_, nullptr);
         }
 
         debugMessenger_ = nullptr;
     }
 
-    void VulkanContext::createInstance(const core::Window& window) {
+    void VulkanContext::createInstance(const core::Window& window) const {
         if (debugEnabled_ && !checkValidationLayerSupport(ValidationLayers)) {
             throw std::runtime_error("Validation layers requested, but not available!");
         }
@@ -154,32 +164,37 @@ namespace time_kill::graphics {
             createInfo.enabledLayerCount = 0;
         }
 
-        if (const auto result = vkCreateInstance(&createInfo, nullptr, &instance_); result != VK_SUCCESS) {
+        const auto res = resources_;
+
+        if (const auto result = vkCreateInstance(&createInfo, nullptr, &res->instance); result != VK_SUCCESS) {
             throw std::runtime_error("Failed to create Vulkan instance (vkCreateInstance failed)");
         }
 
         core::Logger::getInstance().debug("Created Vulkan instance successfully.");
     }
 
-    void VulkanContext::createSurface(const core::Window& window) {
+    void VulkanContext::createSurface(const core::Window& window) const {
         // Use GLFW to crate a Vulkan surface
-        if (glfwCreateWindowSurface(instance_, window.window_.get(), nullptr, &surface_) != VK_SUCCESS) {
+        if (const auto res = resources_;
+            glfwCreateWindowSurface(res->instance, window.window_.get(), nullptr, &res->surface) != VK_SUCCESS) {
             throw std::runtime_error("Failed to create window surface!");
         }
 
         core::Logger::getInstance().info("Vulkan surface created successfully.");
     }
 
-    void VulkanContext::pickPhysicalDevice(const core::Window &window) {
+    void VulkanContext::pickPhysicalDevice(const core::Window &window) const {
+        const auto res = resources_;
+
         uint32_t deviceCount = 0;
-        vkEnumeratePhysicalDevices(instance_, &deviceCount, nullptr);
+        vkEnumeratePhysicalDevices(res->instance, &deviceCount, nullptr);
 
         if (deviceCount == 0) {
             throw std::runtime_error("Failed to find GPUs with Vulkan support!");
         }
 
         std::vector<VkPhysicalDevice> devices(deviceCount);
-        vkEnumeratePhysicalDevices(instance_, &deviceCount, devices.data());
+        vkEnumeratePhysicalDevices(res->instance, &deviceCount, devices.data());
 
         std::multimap<int, VkPhysicalDevice> candidates;
         for (const auto& device : devices) {
@@ -189,8 +204,8 @@ namespace time_kill::graphics {
 
         // Select the best device (highest score)
         if (candidates.rbegin()->first == 0) {
-            physicalDevice_ = candidates.begin()->second;
-            const auto deviceName = VulkanTools::getDeviceName(physicalDevice_);
+            res->physicalDevice = candidates.begin()->second;
+            const auto deviceName = VulkanTools::getDeviceName(res->physicalDevice);
             core::Logger::getInstance().info("Vulkan physical device found: " + deviceName);
         } else {
             throw std::runtime_error("Failed to find a suitable GPU!");
@@ -221,9 +236,11 @@ namespace time_kill::graphics {
             return 0;
         }
 
+        const auto res = resources_;
+
         // Check the support for required queue families
         if (const QueueFamilyIndices indices =
-            VulkanTools::findQueueFamilies(instance_, surface_, device); !indices.isComplete()) {
+            VulkanTools::findQueueFamilies(res->instance, res->surface, device); !indices.isComplete()) {
             return 0;
         }
 
@@ -282,15 +299,17 @@ namespace time_kill::graphics {
         return score;
     }
 
-    void VulkanContext::createLogicalDevice(const core::Window& window) {
-        if (physicalDevice_ == nullptr) {
+    void VulkanContext::createLogicalDevice(const core::Window& window) const {
+        const auto res = resources_;
+
+        if (res->physicalDevice == nullptr) {
             throw std::runtime_error("Physical device not selected!");
         }
 
-        const auto deviceName = VulkanTools::getDeviceName(physicalDevice_);
+        const auto deviceName = VulkanTools::getDeviceName(res->physicalDevice);
 
         const auto [graphicsFamily, presentFamily] =
-            VulkanTools::findQueueFamilies(instance_, surface_, physicalDevice_);
+            VulkanTools::findQueueFamilies(res->instance, res->surface, res->physicalDevice);
 
         if (!graphicsFamily.has_value() || !presentFamily.has_value()) {
             throw std::runtime_error("Failed to find required queue families!");
@@ -338,21 +357,21 @@ namespace time_kill::graphics {
         }
 
         // Create the logical device
-        if (vkCreateDevice(physicalDevice_, &createInfo, nullptr, &logicalDevice_) != VK_SUCCESS) {
+        if (vkCreateDevice(res->physicalDevice, &createInfo, nullptr, &res->logicalDevice) != VK_SUCCESS) {
             throw std::runtime_error("Failed to create logical device for GPU: " +  deviceName);
         }
-        if (logicalDevice_ == nullptr) {
+        if (res->logicalDevice == nullptr) {
             throw std::runtime_error("Failed to create logical device! (logicalDevice isn't present)");
         }
 
         // Retrieve queue handles
-        vkGetDeviceQueue(logicalDevice_, graphicsFamily.value(), 0, &graphicsQueue_);
-        vkGetDeviceQueue(logicalDevice_, presentFamily.value(), 0, &presentQueue_);
+        vkGetDeviceQueue(res->logicalDevice, graphicsFamily.value(), 0, &res->graphicsQueue);
+        vkGetDeviceQueue(res->logicalDevice, presentFamily.value(), 0, &res->presentQueue);
 
-        if (graphicsQueue_ == nullptr) {
+        if (res->graphicsQueue == nullptr) {
             throw std::runtime_error("Failed to create graphics queue!");
         }
-        if (presentQueue_ == nullptr) {
+        if (res->presentQueue == nullptr) {
             throw std::runtime_error("Failed to create presenting queue!");
         }
 
@@ -404,23 +423,25 @@ namespace time_kill::graphics {
     ) const {
         SwapchainSupportDetails details = {};
 
+        const auto res = resources_;
+
         // Get surface capabilities
-        vkGetPhysicalDeviceSurfaceCapabilitiesKHR(device, surface_, &details.capabilities);
+        vkGetPhysicalDeviceSurfaceCapabilitiesKHR(device, res->surface, &details.capabilities);
 
         // Retrieve supported Surface formats
         uint32_t formatCount;
-        vkGetPhysicalDeviceSurfaceFormatsKHR(device, surface_, &formatCount, nullptr);
+        vkGetPhysicalDeviceSurfaceFormatsKHR(device, res->surface, &formatCount, nullptr);
         if (formatCount == 0) {
             details.formats.resize(formatCount);
-            vkGetPhysicalDeviceSurfaceFormatsKHR(device, surface_, &formatCount, details.formats.data());
+            vkGetPhysicalDeviceSurfaceFormatsKHR(device, res->surface, &formatCount, details.formats.data());
         }
 
         // Retrieve supported presentation modes
         uint32_t presentModeCount = 0;
-        vkGetPhysicalDeviceSurfacePresentModesKHR(device, surface_, &presentModeCount, nullptr);
+        vkGetPhysicalDeviceSurfacePresentModesKHR(device, res->surface, &presentModeCount, nullptr);
         if (presentModeCount == 0) {
             details.presentModes.resize(presentModeCount);
-            vkGetPhysicalDeviceSurfacePresentModesKHR(device, surface_, &presentModeCount, details.presentModes.data());
+            vkGetPhysicalDeviceSurfacePresentModesKHR(device, res->surface, &presentModeCount, details.presentModes.data());
         }
 
         return details;

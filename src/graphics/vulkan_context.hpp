@@ -3,6 +3,8 @@
 #pragma once
 
 #include "core/window.hpp"
+#include "vulkan_resources.hpp"
+#include "vulkan_swapchain.hpp"
 #include <vulkan/vulkan.h>
 
 namespace time_kill::graphics {
@@ -17,7 +19,6 @@ namespace time_kill::graphics {
         bool enableTesselation = false;
         bool enableAnisotropy = false;
     };
-
 
     //! @class VulkanContext
     //! @brief Manages the Vulkan context, including instance, physical device selection,
@@ -60,17 +61,17 @@ namespace time_kill::graphics {
         //=== Instance and surface creation
 
         //! Initializes the Vulkan instance. This is the first major Vulkan object to create.
-        void createInstance(const core::Window& window);
+        void createInstance(const core::Window& window) const;
 
         //! Creates a surface for rendering (e.g., using GLFW). This is typically done after the instance is created.
-        void createSurface(const core::Window& window);
+        void createSurface(const core::Window& window) const;
 
         //=== Physical device selection
 
         //! Enumerates and selects a physical device (GPU) that supports the required features.
-        void pickPhysicalDevice(const core::Window& window);
+        void pickPhysicalDevice(const core::Window& window) const;
 
-        void createLogicalDevice(const core::Window& window);
+        void createLogicalDevice(const core::Window& window) const;
 
         //! A helper function used by pickPhysicalDevice to score and select the best physical device.
         int rateDeviceSuitability(VkPhysicalDevice device, const core::Window& window) const;
@@ -84,12 +85,8 @@ namespace time_kill::graphics {
 
         //=== Member variables
         bool debugEnabled_ = false;                 ///< Enables debug features if true.
-        VkInstance instance_;                       ///< Vulkan instance.
         VkDebugUtilsMessengerEXT debugMessenger_;   ///< Debug messenger for validation layers.
-        VkSurfaceKHR surface_;                      ///< Vulkan surface.
-        VkPhysicalDevice physicalDevice_;           ///< Selected physical device.
-        VkDevice logicalDevice_;                    ///< Vulkan logical device.
-        VkQueue graphicsQueue_;                     ///< Graphics queue.
-        VkQueue presentQueue_;                      ///< Presentation queue.
+        SharedPtr<VulkanResources> resources_;
+        SharedPtr<VulkanSwapchain> swapchain_;
     };
 }
