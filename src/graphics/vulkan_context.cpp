@@ -35,33 +35,46 @@ namespace time_kill::graphics {
     }
 
     VulkanContext::~VulkanContext() {
-        // FIXME This must be done in VulkanResources?
-        // if (logicalDevice_ != nullptr) {
-        //     queuesWaitIdle();
-        //     vkDestroyDevice(logicalDevice_, nullptr);
-        //     logicalDevice_ = nullptr;
-        // }
-        // if (surface_ != nullptr) {
-        //     vkDestroySurfaceKHR(instance_, surface_, nullptr);
-        //     surface_ = nullptr;
-        // }
-        // if (debugEnabled_ && debugMessenger_ != nullptr) {
-        //     cleanupDebugMessenger();
-        //     debugMessenger_ = nullptr;
-        // }
-        // if (instance_ != nullptr) {
-        //     vkDestroyInstance(instance_, nullptr);
-        //     instance_ = nullptr;
-        // }
+        const auto& res = resources_.get();
+        auto& log = core::Logger::getInstance();
+
+        if (swapchain_) {
+            swapchain_->destroySwapchain();
+        }
+        if (res->logicalDevice != nullptr) {
+            queuesWaitIdle(true);
+            vkDestroyDevice(res->logicalDevice, nullptr);
+            res->logicalDevice = nullptr;
+            log.trace("Destroyed Vulkan logical device.");
+        }
+        if (res->surface != nullptr) {
+            vkDestroySurfaceKHR(res->instance, res->surface, nullptr);
+            res->surface = nullptr;
+            log.trace("Destroyed Vulkan surface.");
+        }
+        if (debugEnabled_ && debugMessenger_ != nullptr) {
+            cleanupDebugMessenger();
+            debugMessenger_ = nullptr;
+            log.trace("Destroyed Vulkan debug messenger.");
+        }
+        if (res->instance != nullptr) {
+            vkDestroyInstance(res->instance, nullptr);
+            res->instance = nullptr;
+            log.trace("Destroyed Vulkan instance.");
+        }
     }
 
-    void VulkanContext::queuesWaitIdle() const {
+    void VulkanContext::queuesWaitIdle(const bool waitForDevice) const {
         const auto res = resources_;
 
-        // Wait for the end of all operations in the graphics queue
-        VulkanTools::queueWaitIdle(res->graphicsQueue);
-        // Wait for the end of all operations in the present queue
-        VulkanTools::queueWaitIdle(res->presentQueue);
+        if (waitForDevice) {
+            vkDeviceWaitIdle(res->logicalDevice);
+        } else {
+            // Wait for the end of all operations in the graphics queue
+            VulkanTools::queueWaitIdle(res->graphicsQueue);
+            // Wait for the end of all operations in the present queue
+            VulkanTools::queueWaitIdle(res->presentQueue);
+        }
     }
 
     VKAPI_ATTR VkBool32 VKAPI_CALL VulkanContext::debugCallback(

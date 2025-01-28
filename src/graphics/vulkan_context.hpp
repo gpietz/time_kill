@@ -34,7 +34,7 @@ namespace time_kill::graphics {
         ~VulkanContext();
 
         //! @brief Waits for all operations on the graphics and present queues to complete.
-        void queuesWaitIdle() const;
+        void queuesWaitIdle(bool waitForDevice = false) const;
 
     private:
         //=== Debug methods
