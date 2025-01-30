@@ -29,7 +29,7 @@ set(GLFW_LIB glfw CACHE INTERNAL "GLFW library target")
 set(VULKAN_LIB Vulkan::Vulkan CACHE INTERNAL "Vulkan library target")
 
 # Debug Logging (Optional)
-option(ENABLE_DEBUG_LOGGING "Enable debug logging" OFF)
+option(ENABLE_DEBUG_LOGGING "Enable debug logging" ON)
 
 # Target Compile Definitions (For Debug Logging)
 if(ENABLE_DEBUG_LOGGING)

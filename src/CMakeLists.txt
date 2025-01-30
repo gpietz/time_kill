@@ -4,7 +4,6 @@ set(SOURCES
     core/window.cpp
     graphics/vulkan_context.cpp
     graphics/vulkan_mappings.cpp
-    graphics/vulkan_resources.cpp
     graphics/vulkan_swapchain.cpp
     graphics/vulkan_tools.cpp
     utils/string_utils.cpp)

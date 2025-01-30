@@ -22,40 +22,39 @@ namespace time_kill::graphics {
     //     }
     // }
 
+    VulkanSwapchain::VulkanSwapchain(VulkanResources& resources) : resources_(resources_) {
+    }
+
     VulkanSwapchain::~VulkanSwapchain() {
         destroySwapchain();
     }
 
-    void VulkanSwapchain::createSwapchain(const core::Window& window, const SharedPtr<VulkanResources>& resources) {
-        if (swapchain_ != VK_NULL_HANDLE) {
+    void VulkanSwapchain::createSwapchain(const core::Window& window) {
+        auto& res = resources_;
+        if (res.swapchain != VK_NULL_HANDLE) {
             destroySwapchain();
         }
 
-        const auto& res = resources;
-
-        if (res->physicalDevice == nullptr)
+        if (res.physicalDevice == nullptr)
             throw std::runtime_error("Unable to create swapchain; physical device is null!");
-        if (res->surface == nullptr)
+        if (res.surface == nullptr)
             throw std::runtime_error("Unable to create swapchain; surface is null!");
-        if (res->logicalDevice == nullptr)
+        if (res.logicalDevice == nullptr)
             throw std::runtime_error("Unable to create swapchain; logical device is null!");
-
-        // Store logical device to enable swapchain destroy
-        logicalDevice_ = res->logicalDevice;
 
         const VulkanMappings mappings {};
 
         // Query swapchain support
         VkSurfaceCapabilitiesKHR surfaceCapabilities;
-        vkGetPhysicalDeviceSurfaceCapabilitiesKHR(res->physicalDevice, res->surface, &surfaceCapabilities);
+        vkGetPhysicalDeviceSurfaceCapabilitiesKHR(res.physicalDevice, res.surface, &surfaceCapabilities);
 
         // Query surface format
         Vector<VkSurfaceFormatKHR> surfaceFormats;
         uint32_t surfaceFormatCount;
-        vkGetPhysicalDeviceSurfaceFormatsKHR(res->physicalDevice, res->surface, &surfaceFormatCount, nullptr);
+        vkGetPhysicalDeviceSurfaceFormatsKHR(res.physicalDevice, res.surface, &surfaceFormatCount, nullptr);
         if (surfaceFormatCount != 0) {
             surfaceFormats.resize(surfaceFormatCount);
-            vkGetPhysicalDeviceSurfaceFormatsKHR(res->physicalDevice, res->surface, &surfaceFormatCount, surfaceFormats.data());
+            vkGetPhysicalDeviceSurfaceFormatsKHR(res.physicalDevice, res.surface, &surfaceFormatCount, surfaceFormats.data());
             if (core::Logger::getInstance().isTraceEnabled()) {
                 core::Logger::getInstance().debug(std::format("Found {} surface formats:", surfaceFormatCount));
                 logSurfaceFormat(mappings, surfaceFormats);
@@ -69,10 +68,10 @@ namespace time_kill::graphics {
         // Query presentation modes
         Vector<VkPresentModeKHR> presentModes; 
         uint32_t presentModeCount;
-        vkGetPhysicalDeviceSurfacePresentModesKHR(res->physicalDevice, res->surface, &presentModeCount, nullptr);
+        vkGetPhysicalDeviceSurfacePresentModesKHR(res.physicalDevice, res.surface, &presentModeCount, nullptr);
         if(presentModeCount != 0) {
             presentModes.resize(presentModeCount);
-            vkGetPhysicalDeviceSurfacePresentModesKHR(res->physicalDevice, res->surface, &presentModeCount, presentModes.data());
+            vkGetPhysicalDeviceSurfacePresentModesKHR(res.physicalDevice, res.surface, &presentModeCount, presentModes.data());
             core::Logger::getInstance().debug(std::format("Found {} present modes", presentModeCount));
             //logPresentModes(presentModes);
         } else {
@@ -80,18 +79,18 @@ namespace time_kill::graphics {
         }
 
         // Choose the best settings for the swapchain
-        VkSurfaceFormatKHR surfaceFormat = chooseSwapSurfaceFormat(surfaceFormats);
-        VkPresentModeKHR presentMode = chooseSwapPresentMode(presentModes);
-        extent_ = chooseSwapExtent(surfaceCapabilities, window);
+        auto [format, colorSpace] = chooseSwapSurfaceFormat(surfaceFormats);
+        const VkPresentModeKHR presentMode = chooseSwapPresentMode(presentModes);
+        res.swapchainExtent = chooseSwapExtent(surfaceCapabilities, window);
 
         // Create the swapchain
         VkSwapchainCreateInfoKHR createInfo = {};
         createInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
-        createInfo.surface = res->surface;
+        createInfo.surface = res.surface;
         createInfo.minImageCount = surfaceCapabilities.minImageCount + 1;
-        createInfo.imageFormat = surfaceFormat.format;
-        createInfo.imageColorSpace = surfaceFormat.colorSpace;
-        createInfo.imageExtent = extent_;
+        createInfo.imageFormat = format;
+        createInfo.imageColorSpace = colorSpace;
+        createInfo.imageExtent = res.swapchainExtent;
         createInfo.imageArrayLayers = 1;
         createInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
         createInfo.preTransform = surfaceCapabilities.currentTransform;
@@ -100,74 +99,78 @@ namespace time_kill::graphics {
         createInfo.clipped = VK_TRUE;
 
         VkSwapchainKHR swapchain = nullptr;
-        if (vkCreateSwapchainKHR(res->logicalDevice, &createInfo, nullptr, &swapchain) != VK_SUCCESS) {
+        if (vkCreateSwapchainKHR(res.logicalDevice, &createInfo, nullptr, &swapchain) != VK_SUCCESS) {
             throw std::runtime_error("Failed to create swapchain!");
         }
         if (swapchain == nullptr) {
             throw std::runtime_error("Failed to create swapchain! (swapchain is null)");
         }
-        swapchain_ = swapchain;
+        res.swapchain = swapchain;
 
         core::Logger::getInstance().debug("Successfully created swapchain!");
 
         // Store image format
-        imageFormat_ = createInfo.imageFormat;
+        res.swapchainImageFormat = createInfo.imageFormat;
 
         // Retrieve swapchain images
-        vkGetSwapchainImagesKHR(logicalDevice_, swapchain_, &surfaceFormatCount, nullptr);
-        images_.resize(surfaceFormatCount);
-        vkGetSwapchainImagesKHR(logicalDevice_, swapchain_, &surfaceFormatCount, images_.data());
+        vkGetSwapchainImagesKHR(res.logicalDevice, res.swapchain, &surfaceFormatCount, nullptr);
+        res.swapchainImages.resize(surfaceFormatCount);
+        vkGetSwapchainImagesKHR(res.logicalDevice, res.swapchain, &surfaceFormatCount, res.swapchainImages.data());
 
         // Create image views
         createImageViews();
     }
 
     void VulkanSwapchain::destroySwapchain() {
-        if (logicalDevice_ == VK_NULL_HANDLE) {
+        auto& res = resources_;
+
+        if (res.logicalDevice == VK_NULL_HANDLE) {
             core::Logger::getInstance().warn("Unable to destroy swapchain; the logical device reference is invalid!");
             return;
         }
 
-        vkDeviceWaitIdle(logicalDevice_);
+        vkDeviceWaitIdle(res.logicalDevice);
 
-        if (!images_.empty()) {
-            core::Logger::getInstance().debug(std::format("Destroying {} image views.", images_.size()));
-            for (auto const imageView : imageViews_) {
-                vkDestroyImageView(logicalDevice_, imageView, nullptr);
+        if (!res.swapchainImages.empty()) {
+            core::Logger::getInstance().debug(std::format("Destroying {} image views.", res.swapchainImages.size()));
+            for (auto const imageView : res.swapchainImageViews) {
+                vkDestroyImageView(res.logicalDevice, imageView, nullptr);
             }
-            imageViews_.clear();
+            res.swapchainImageViews.clear();
         } else {
             core::Logger::getInstance().debug("No image views to destroy.");
         }
 
-        if (swapchain_ != VK_NULL_HANDLE) {
-            vkDestroySwapchainKHR(logicalDevice_, swapchain_, nullptr);
+        if (res.swapchain != VK_NULL_HANDLE) {
+            vkDestroySwapchainKHR(res.logicalDevice, res.swapchain, nullptr);
             core::Logger::getInstance().debug("Destroyed Vulkan swapchain.");
-            swapchain_ = VK_NULL_HANDLE;
+            res.swapchain = VK_NULL_HANDLE;
         } else {
             core::Logger::getInstance().debug("No Vulkan swapchain to destroy.");
         }
 
-        swapchain_ = VK_NULL_HANDLE;
+        res.swapchain = VK_NULL_HANDLE;
     }
 
     void VulkanSwapchain::createImageViews() {
-        if (logicalDevice_ == VK_NULL_HANDLE) {
+        auto& res = resources_;
+        if (res.logicalDevice == VK_NULL_HANDLE) {
             throw std::runtime_error("Logical device is null. Cannot create image views.");
         }
 
-        if (images_.empty()) {
+        if (res.swapchainImages.empty()) {
             throw std::runtime_error("No images available to create image views.");
         }
 
-        imageViews_.resize(images_.size());
+        const auto imageCount = res.swapchainImages.size();
+        res.swapchainImageViews.resize(imageCount);
 
-        for (size_t i = 0; i < images_.size(); i++) {
+        for (size_t i = 0; i < res.swapchainImages.size(); i++) {
             VkImageViewCreateInfo createInfo = {};
             createInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-            createInfo.image = images_[i];
+            createInfo.image = res.swapchainImages[i];
             createInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
-            createInfo.format = imageFormat_;
+            createInfo.format = res.swapchainImageFormat;
             createInfo.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
             createInfo.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
             createInfo.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
@@ -178,17 +181,17 @@ namespace time_kill::graphics {
             createInfo.subresourceRange.baseArrayLayer = 0;
             createInfo.subresourceRange.layerCount = 1;
 
-            if (vkCreateImageView(logicalDevice_, &createInfo, nullptr, &imageViews_[i]) != VK_SUCCESS) {
+            if (vkCreateImageView(res.logicalDevice, &createInfo, nullptr, &res.swapchainImageViews[i]) != VK_SUCCESS) {
                 // Release previous created image views to avoid memory leaks
                 for (size_t j = 0; j < i; j++) {
-                    vkDestroyImageView(logicalDevice_, imageViews_[j], nullptr);
+                    vkDestroyImageView(res.logicalDevice, res.swapchainImageViews[j], nullptr);
                 }
-                core::Logger::getInstance().error(std::format("Failed to create image view for image {}", i));
+                log_error(std::format("Failed to create image view for image {}", i));
                 throw std::runtime_error("Failed to create image views!");
             }
         }
 
-        core::Logger::getInstance().debug(std::format("Successfully created {} image views.", images_.size()));
+        log_debug(std::format("Successfully created {} image views.", imageCount));
     }
 
     VkSurfaceFormatKHR VulkanSwapchain::chooseSwapSurfaceFormat(const Vector<VkSurfaceFormatKHR>& availableFormats) {

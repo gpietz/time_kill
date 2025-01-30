@@ -61,17 +61,17 @@ namespace time_kill::graphics {
         //=== Instance and surface creation
 
         //! Initializes the Vulkan instance. This is the first major Vulkan object to create.
-        void createInstance(const core::Window& window) const;
+        void createInstance(const core::Window& window);
 
         //! Creates a surface for rendering (e.g., using GLFW). This is typically done after the instance is created.
-        void createSurface(const core::Window& window) const;
+        void createSurface(const core::Window& window);
 
         //=== Physical device selection
 
         //! Enumerates and selects a physical device (GPU) that supports the required features.
-        void pickPhysicalDevice(const core::Window& window) const;
+        void pickPhysicalDevice(const core::Window& window);
 
-        void createLogicalDevice(const core::Window& window) const;
+        void createLogicalDevice(const core::Window& window);
 
         //! A helper function used by pickPhysicalDevice to score and select the best physical device.
         int rateDeviceSuitability(VkPhysicalDevice device, const core::Window& window) const;
@@ -86,7 +86,7 @@ namespace time_kill::graphics {
         //=== Member variables
         bool debugEnabled_ = false;                 ///< Enables debug features if true.
         VkDebugUtilsMessengerEXT debugMessenger_;   ///< Debug messenger for validation layers.
-        SharedPtr<VulkanResources> resources_;
-        SharedPtr<VulkanSwapchain> swapchain_;
+        VulkanResources resources_;
+        VulkanSwapchain swapchain_;
     };
 }

@@ -77,3 +77,37 @@ namespace time_kill::core {
         DateSeparator dateSeparator_ = DateSeparator::Hyphen;
     };
 }
+
+namespace time_kill {
+    inline void log_trace(const String& message) {
+        core::Logger::getInstance().log(core::LogLevel::TRACE, message);
+    }
+
+    inline void log_debug(const String& message) {
+        core::Logger::getInstance().log(core::LogLevel::DEBUG, message);
+    }
+
+    inline void log_info(const String& message) {
+        core::Logger::getInstance().log(core::LogLevel::INFO, message);
+    }
+
+    inline void log_warn(const String& message) {
+        core::Logger::getInstance().log(core::LogLevel::WARN, message);
+    }
+
+    inline void log_error(const String& message) {
+        core::Logger::getInstance().log(core::LogLevel::ERROR, message);
+    }
+
+    inline void log_write(const core::LogLevel level, const String& message) {
+        core::Logger::getInstance().log(level, message);
+    }
+
+    inline void log_enable_trace(const bool enabled) {
+        core::Logger::getInstance().setTraceEnabled(enabled);
+    }
+
+    inline void log_enable_debug(const bool enabled) {
+        core::Logger::getInstance().setDebugEnabled(enabled);
+    }
+}
