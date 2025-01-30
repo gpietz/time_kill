@@ -28,18 +28,18 @@ endif()
 set(GLFW_LIB glfw CACHE INTERNAL "GLFW library target")
 set(VULKAN_LIB Vulkan::Vulkan CACHE INTERNAL "Vulkan library target")
 
-# Debug Logging (Optional)
-option(ENABLE_DEBUG_LOGGING "Enable debug logging" ON)
-
-# Target Compile Definitions (For Debug Logging)
-if(ENABLE_DEBUG_LOGGING)
-    target_compile_definitions(timekill PRIVATE DEBUG_LOGGING_ENABLED)
-    message(STATUS "Debug logging is ENABLED (via ENABLE_DEBUG_LOGGING option).")
-#else
-    message(STATUS "Debug logging is DISABLED.")
-endif()
-
 # G#obal paths
 add_subdirectory(src)
 add_subdirectory(examples/basic_window)
 add_subdirectory(examples/vulkan_window)
+
+# Debug Logging (Optional)
+option(ENABLE_DEBUG_LOGGING "Enable debug logging" OFF)
+
+# Target Compile Definitions (For Debug Logging)
+if(ENABLE_DEBUG_LOGGING)
+    target_compile_definitions(time_kill PRIVATE DEBUG_LOGGING_ENABLED)
+    message(STATUS "Debug logging is ENABLED (via ENABLE_DEBUG_LOGGING option).")
+#else
+    message(STATUS "Debug logging is DISABLED.")
+endif()

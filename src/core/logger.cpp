@@ -31,11 +31,12 @@ namespace time_kill::core {
     }
 
     void Logger::log(const LogLevel level, const String& message) {
-        if ((level == LogLevel::DEBUG && !debugLoggingEnabled_) || (level == LogLevel::TRACE && !traceLoggingEnabled_)) {
+        if ((level == LogLevel::DEBUG && !debugLoggingEnabled_) ||
+            (level == LogLevel::TRACE && !traceLoggingEnabled_)) {
             return;
         }
 
-        std::lock_guard<std::mutex> lock(logMutex_);
+        std::lock_guard lock(logMutex_);
         const auto logMessage = getTimestamp() + " [" + levelToString(level) + "] " + message;
 
         // Output to console
@@ -43,7 +44,7 @@ namespace time_kill::core {
 
         // Output to file
         if (logFile_.is_open()) {
-            logFile_ << logMessage << "\n";
+            logFile_ << logMessage << std::endl;
         }
     }
 
