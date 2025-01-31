@@ -28,5 +28,8 @@ namespace time_kill::graphics {
         VkImage depthImage = VK_NULL_HANDLE;
         VkDeviceMemory depthImageMemory = VK_NULL_HANDLE;
         VkImageView depthImageView = VK_NULL_HANDLE;
+
+        //=== Render Pass
+        VkRenderPass renderPass = VK_NULL_HANDLE;
     };
 }

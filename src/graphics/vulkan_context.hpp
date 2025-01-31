@@ -5,6 +5,7 @@
 #include "core/window.hpp"
 #include "vulkan_resources.hpp"
 #include "vulkan_swapchain.hpp"
+#include "vulkan_render_pass.hpp"
 #include <vulkan/vulkan.h>
 
 namespace time_kill::graphics {
@@ -88,5 +89,6 @@ namespace time_kill::graphics {
         VkDebugUtilsMessengerEXT debugMessenger_;   ///< Debug messenger for validation layers.
         VulkanResources resources_;
         VulkanSwapchain swapchain_;
+        VulkanRenderPass renderPass_;
     };
 }

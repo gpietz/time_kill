@@ -9,11 +9,10 @@ constexpr auto WINDOW_TITLE = "Vulkan Window Example";
 
 int main() {
     try {
-        time_kill::log_enable_trace(true);
-
         // Initialize file logging
-        time_kill::core::Logger::getInstance().init("vulkan_window.log", true);
-        time_kill::core::Logger::getInstance().setDateSeparator(time_kill::core::DateSeparator::Period);
+        time_kill::log_init("vulkan_window.log", true);
+        time_kill::log_enable_trace(true);
+        time_kill::log_set_date_separator(time_kill::core::DateSeparator::Period);
 
         // Create a window instance with vulkan context
         time_kill::core::Window window(800, 600, WINDOW_TITLE, true);

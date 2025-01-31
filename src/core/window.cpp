@@ -1,10 +1,11 @@
 #include "window.hpp"
 #include <stdexcept>
+#include <utility>
 
 namespace time_kill::core {
     // Constructor: Initializes the window with given dimensions and title
-    Window::Window(const int width, const int height, const std::string& title, const bool resizable)
-        : width_(width), height_(height), title_(title), vulkanSupported_(false) {
+    Window::Window(const int width, const int height, String  title, const bool resizable)
+        : width_(width), height_(height), title_(std::move(title)), vulkanSupported_(false) {
 
         // Initialize GLFW
         if (!glfwInit()) {
@@ -15,8 +16,9 @@ namespace time_kill::core {
         vulkanSupported_ = glfwVulkanSupported();
 
         // Configure GLFW to not create an OpenGL context
-        glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
+        glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
         glfwWindowHint(GLFW_RESIZABLE,  resizable ? GLFW_TRUE : GLFW_FALSE);
+        glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 
         // Create the GLFW window
         GLFWwindow* rawWindow = glfwCreateWindow(width_, height_, title_.c_str(), nullptr, nullptr);

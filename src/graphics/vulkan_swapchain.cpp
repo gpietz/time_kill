@@ -13,23 +13,18 @@ namespace time_kill::graphics {
             );
         }
     }
-    //
-    // void logPresentModes(const Vector<VkPresentModeKHR>& present_modes) {
-    //     for (const auto& present_mode : present_modes) {
-    //         core::Logger::getInstance().debug(
-    //             std::format("- {}", present_mode)
-    //         );
-    //     }
-    // }
 
-    VulkanSwapchain::VulkanSwapchain(VulkanResources& resources) : resources_(resources_) {
+    void logPresentModes(const VulkanMappings& mappings, const Vector<VkPresentModeKHR>& present_modes) {
+        for (const auto& present_mode : present_modes) {
+            core::Logger::getInstance().debug(
+                std::format("- {}", mappings.getPresentModeDescription(present_mode))
+            );
+        }
     }
 
-    VulkanSwapchain::~VulkanSwapchain() {
-        destroySwapchain();
-    }
+    VulkanSwapchain::VulkanSwapchain(VulkanResources& resources) : resources_(resources) {}
 
-    void VulkanSwapchain::createSwapchain(const core::Window& window) {
+    void VulkanSwapchain::createSwapchain(const core::Window& window) const {
         auto& res = resources_;
         if (res.swapchain != VK_NULL_HANDLE) {
             destroySwapchain();
@@ -55,11 +50,11 @@ namespace time_kill::graphics {
         if (surfaceFormatCount != 0) {
             surfaceFormats.resize(surfaceFormatCount);
             vkGetPhysicalDeviceSurfaceFormatsKHR(res.physicalDevice, res.surface, &surfaceFormatCount, surfaceFormats.data());
-            if (core::Logger::getInstance().isTraceEnabled()) {
-                core::Logger::getInstance().debug(std::format("Found {} surface formats:", surfaceFormatCount));
+            if (log_is_trace_enabled()) {
+                log_debug(std::format("Found {} surface formats:", surfaceFormatCount));
                 logSurfaceFormat(mappings, surfaceFormats);
             } else {
-                core::Logger::getInstance().debug(std::format("Found {} surface formats", surfaceFormatCount));
+                log_debug(std::format("Found {} surface formats", surfaceFormatCount));
             }
         } else {
             throw std::runtime_error("Failed to get surface formats!");
@@ -72,8 +67,12 @@ namespace time_kill::graphics {
         if(presentModeCount != 0) {
             presentModes.resize(presentModeCount);
             vkGetPhysicalDeviceSurfacePresentModesKHR(res.physicalDevice, res.surface, &presentModeCount, presentModes.data());
-            core::Logger::getInstance().debug(std::format("Found {} present modes", presentModeCount));
-            //logPresentModes(presentModes);
+            if (log_is_trace_enabled()) {
+                log_debug(std::format("Found {} present modes:", presentModeCount));
+                logPresentModes(mappings, presentModes);
+            } else {
+                log_debug(std::format("Found {} present modes", presentModeCount));
+            }
         } else {
             throw std::runtime_error("Failed to get presentation modes!");
         }
@@ -82,6 +81,11 @@ namespace time_kill::graphics {
         auto [format, colorSpace] = chooseSwapSurfaceFormat(surfaceFormats);
         const VkPresentModeKHR presentMode = chooseSwapPresentMode(presentModes);
         res.swapchainExtent = chooseSwapExtent(surfaceCapabilities, window);
+
+        if (log_is_debug_enabled()) {
+            log_debug(std::format("Picked format: {}", mappings.getFormatDescription(format)));
+            log_debug(std::format("Picked present mode: {}", mappings.getPresentModeDescription(presentMode)));
+        }
 
         // Create the swapchain
         VkSwapchainCreateInfoKHR createInfo = {};
@@ -107,7 +111,7 @@ namespace time_kill::graphics {
         }
         res.swapchain = swapchain;
 
-        core::Logger::getInstance().debug("Successfully created swapchain!");
+        log_debug("Successfully created swapchain!");
 
         // Store image format
         res.swapchainImageFormat = createInfo.imageFormat;
@@ -121,38 +125,38 @@ namespace time_kill::graphics {
         createImageViews();
     }
 
-    void VulkanSwapchain::destroySwapchain() {
+    void VulkanSwapchain::destroySwapchain() const {
         auto& res = resources_;
 
         if (res.logicalDevice == VK_NULL_HANDLE) {
-            core::Logger::getInstance().warn("Unable to destroy swapchain; the logical device reference is invalid!");
+            log_warn("Unable to destroy swapchain; the logical device reference is invalid!");
             return;
         }
 
         vkDeviceWaitIdle(res.logicalDevice);
 
         if (!res.swapchainImages.empty()) {
-            core::Logger::getInstance().debug(std::format("Destroying {} image views.", res.swapchainImages.size()));
+            log_debug(std::format("Destroying {} image views.", res.swapchainImages.size()));
             for (auto const imageView : res.swapchainImageViews) {
                 vkDestroyImageView(res.logicalDevice, imageView, nullptr);
             }
             res.swapchainImageViews.clear();
         } else {
-            core::Logger::getInstance().debug("No image views to destroy.");
+            log_debug("No image views to destroy.");
         }
 
         if (res.swapchain != VK_NULL_HANDLE) {
             vkDestroySwapchainKHR(res.logicalDevice, res.swapchain, nullptr);
-            core::Logger::getInstance().debug("Destroyed Vulkan swapchain.");
+            log_debug("Destroyed Vulkan swapchain.");
             res.swapchain = VK_NULL_HANDLE;
         } else {
-            core::Logger::getInstance().debug("No Vulkan swapchain to destroy.");
+            log_debug("No Vulkan swapchain to destroy.");
         }
 
         res.swapchain = VK_NULL_HANDLE;
     }
 
-    void VulkanSwapchain::createImageViews() {
+    void VulkanSwapchain::createImageViews() const {
         auto& res = resources_;
         if (res.logicalDevice == VK_NULL_HANDLE) {
             throw std::runtime_error("Logical device is null. Cannot create image views.");

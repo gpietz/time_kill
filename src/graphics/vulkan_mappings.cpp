@@ -54,14 +54,30 @@ namespace time_kill::graphics {
             {VK_FORMAT_B8G8R8A8_UINT, "VK_FORMAT_B8G8R8A8_UINT"},
             {VK_FORMAT_B8G8R8A8_SINT, "VK_FORMAT_B8G8R8A8_SINT"},
             {VK_FORMAT_B8G8R8A8_SRGB, "VK_FORMAT_B8G8R8A8_SRGB"},
+            // incomplete ... add more here .....
         };
+        presentModeMap_ = {
+            {VK_PRESENT_MODE_IMMEDIATE_KHR, "VK_PRESENT_MODE_IMMEDIATE_KHR"},
+            {VK_PRESENT_MODE_FIFO_KHR, "VK_PRESENT_MODE_FIFO_KHR"},
+            {VK_PRESENT_MODE_FIFO_RELAXED_KHR, "VK_PRESENT_MODE_FIFO_RELAXED_KHR"},
+            {VK_PRESENT_MODE_MAILBOX_KHR, "VK_PRESENT_MODE_MAILBOX_KHR"},
+            {VK_PRESENT_MODE_SHARED_DEMAND_REFRESH_KHR, "VK_PRESENT_MODE_SHARED_DEMAND_REFRESH_KHR"},
+            {VK_PRESENT_MODE_SHARED_CONTINUOUS_REFRESH_KHR, "VK_PRESENT_MODE_SHARED_CONTINUOUS_REFRESH_KHR"}
+        };
+
     }
 
-    String VulkanMappings::getFormatDescription(VkFormat format) const {
-        auto it = formatMap_.find(format);
-        if (it != formatMap_.end()) {
+    String VulkanMappings::getFormatDescription(const VkFormat format) const {
+        if (const auto it = formatMap_.find(format); it != formatMap_.end()) {
             return it->second;
         }
         return "Unknown Format";
+    }
+
+    String VulkanMappings::getPresentModeDescription(const VkPresentModeKHR presentMode) const {
+        if (const auto it = presentModeMap_.find(presentMode); it != presentModeMap_.end()) {
+            return it->second;
+        }
+        return "Unknown PresentMode";
     }
 }

@@ -27,6 +27,9 @@ namespace time_kill::core {
 
     class Logger {
     public:
+        Logger(const Logger&) = delete;
+        Logger& operator=(const Logger&) = delete;
+
         // Access via singleton
         static Logger& getInstance();
 
@@ -62,8 +65,7 @@ namespace time_kill::core {
         Logger() = default; // Prevent instance creation
         ~Logger() = default;
 
-        Logger(const Logger&) = delete;
-        Logger& operator=(const Logger&) = delete;
+
 
         // Auxiliary methods
         [[nodiscard]] String getTimestamp() const;
@@ -79,6 +81,14 @@ namespace time_kill::core {
 }
 
 namespace time_kill {
+    inline void log_init(const String& logFilePath, bool debugLoggingEnabled) {
+        core::Logger::getInstance().init(logFilePath, true);
+    }
+
+    inline void log_write(const core::LogLevel level, const String& message) {
+        core::Logger::getInstance().log(level, message);
+    }
+
     inline void log_trace(const String& message) {
         core::Logger::getInstance().log(core::LogLevel::TRACE, message);
     }
@@ -99,15 +109,27 @@ namespace time_kill {
         core::Logger::getInstance().log(core::LogLevel::ERROR, message);
     }
 
-    inline void log_write(const core::LogLevel level, const String& message) {
-        core::Logger::getInstance().log(level, message);
-    }
-
     inline void log_enable_trace(const bool enabled) {
         core::Logger::getInstance().setTraceEnabled(enabled);
     }
 
     inline void log_enable_debug(const bool enabled) {
         core::Logger::getInstance().setDebugEnabled(enabled);
+    }
+
+    inline void log_set_date_format(const core::DateFormat dateFormat) {
+        core::Logger::getInstance().setDateFormat(dateFormat);
+    }
+
+    inline void log_set_date_separator(const core::DateSeparator separator) {
+        core::Logger::getInstance().setDateSeparator(core::DateSeparator::Hyphen);
+    }
+
+    inline bool log_is_debug_enabled() {
+        return core::Logger::getInstance().isDebugEnabled();
+    }
+
+    inline bool log_is_trace_enabled() {
+        return core::Logger::getInstance().isTraceEnabled();
     }
 }

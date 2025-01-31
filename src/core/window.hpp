@@ -16,7 +16,7 @@ namespace time_kill::core {
     class Window {
     public:
         // Constructor: Initializes the window with given dimensions and title
-        Window(int width, int height, const std::string& title, bool resizable = true);
+        Window(int width, int height, String  title, bool resizable = true);
         explicit Window(const WindowConfig& config);
 
         // Destructor: Cleans up resources

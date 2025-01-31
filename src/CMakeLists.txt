@@ -6,6 +6,7 @@ set(SOURCES
     graphics/vulkan_mappings.cpp
     graphics/vulkan_swapchain.cpp
     graphics/vulkan_tools.cpp
+    graphics/vulkan_render_pass.cpp
     utils/string_utils.cpp)
 
 set(HEADERS
@@ -17,6 +18,7 @@ set(HEADERS
     graphics/vulkan_mappings.hpp
     graphics/vulkan_resources.hpp
     graphics/vulkan_swapchain.hpp
+    graphics/vulkan_render_pass.hpp
     utils/string_utils.hpp)
 
 # Add sources and headers to library

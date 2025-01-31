@@ -10,13 +10,13 @@ namespace time_kill::graphics {
     class VulkanSwapchain {
     public:
         explicit VulkanSwapchain(VulkanResources& resources);
-        ~VulkanSwapchain();
+        ~VulkanSwapchain() = default;
 
-        void createSwapchain(const core::Window& window);
-        void destroySwapchain();
+        void createSwapchain(const core::Window& window) const;
+        void destroySwapchain() const;
 
     private:
-        void createImageViews();
+        void createImageViews() const;
 
         static VkSurfaceFormatKHR chooseSwapSurfaceFormat(const Vector<VkSurfaceFormatKHR>& availableFormats);
         static VkPresentModeKHR chooseSwapPresentMode(const Vector<VkPresentModeKHR>& availablePresentModes);

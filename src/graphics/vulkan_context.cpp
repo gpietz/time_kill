@@ -18,7 +18,9 @@ namespace time_kill::graphics {
     VulkanContext::VulkanContext(const core::Window& window, const bool debugEnabled)
         : debugEnabled_(debugEnabled),
           debugMessenger_(nullptr),
-          swapchain_(resources_) {
+          swapchain_(resources_),
+          renderPass_(resources_) {
+
         if (!glfwVulkanSupported()) {
             throw std::runtime_error("Vulkan is not supported by GLFW");
         }
@@ -28,12 +30,18 @@ namespace time_kill::graphics {
         createSurface(window);
         pickPhysicalDevice(window);
         createLogicalDevice(window);
+
+        swapchain_.createSwapchain(window);
+        //renderPass_.createRenderPass();
     }
 
     VulkanContext::~VulkanContext() {
         auto& res = resources_;
         auto& log = core::Logger::getInstance();
 
+        if (res.renderPass != VK_NULL_HANDLE) {
+            renderPass_.destroyRenderPass();
+        }
         if (res.swapchain) {
             swapchain_.destroySwapchain();
         }
