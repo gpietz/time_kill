@@ -1,9 +1,12 @@
 #include "vulkan_graphics_pipeline.hpp"
 #include "vulkan_tools.hpp"
 #include "core/window.hpp"
-#include <fstream>
-
 #include "core/logger.hpp"
+#include <fstream>
+#include <sstream>
+#include <unordered_set>
+
+#include "vulkan_mappings.hpp"
 
 namespace time_kill::graphics {
     VulkanGraphicsPipeline::VulkanGraphicsPipeline(VulkanResources& resources) : resources_(resources) {}
@@ -16,11 +19,28 @@ namespace time_kill::graphics {
 
         Vector<VkPipelineShaderStageCreateInfo> shaderStages;
         Vector<VkShaderModule> shaderModules;
+        Vector<VkVertexInputAttributeDescription> vertexAttributes;
 
         // Load and create shader modules
         for (const auto& file : spirvFiles) {
             log_trace("Load shader: " + file);
             const VkShaderStageFlagBits stage = VulkanTools::getShaderStage(file);
+
+            // Prevent duplicate shader types
+            auto it = std::ranges::find_if(shaderStages,
+                                           [stage] (const VkPipelineShaderStageCreateInfo& ssi) {
+                                               return ssi.stage == stage;
+                                           });
+
+            if (it != shaderStages.end()) {
+                VulkanMappings mappings;
+                std::ostringstream oss;
+                oss << "SPIRV-Reflect: Multiple shaders of the same type detected! " << "\n"
+                    << "Shader: " << file << "\n"
+                    << "conflicts with shader type: " << mappings.getShaderStageDescription(stage);
+                throw std::runtime_error(oss.str());
+            }
+
             auto shaderCode = readSpirvFile(file);
             auto shaderModule = createShaderModule(shaderCode, resources_.logicalDevice, file);
             shaderModules.push_back(shaderModule);
@@ -32,13 +52,32 @@ namespace time_kill::graphics {
             shaderStage.pName = "main"; // Defines the shader entry point
             shaderStage.pSpecializationInfo = nullptr;
             shaderStages.push_back(shaderStage);
+
+            // If it is a vertex shader, add attributes
+            if (stage == VK_SHADER_STAGE_VERTEX_BIT) {
+                // ReSharper disable once CppTooWideScopeInitStatement
+                const auto attributes = VulkanTools::parseVertexInputAttributes(shaderCode, file);
+
+                // Only add new locations (avoid duplicates)
+                std::unordered_set<uint32_t> uniqueLocations;
+                for (const auto& attr : attributes) {
+                    if (!uniqueLocations.insert(attr.location).second) {
+                        std::stringstream oss;
+                        oss << "SPIRV-Reflect: Duplicate attribute location detected -> "
+                            << attr.location << " in file " << file;
+                        throw std::runtime_error(oss.str());
+                    }
+                    vertexAttributes.push_back(attr);
+                }
+            }
         }
 
         // Vertex Input
         VkPipelineVertexInputStateCreateInfo vertexInputInfo = {};
         vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
         vertexInputInfo.vertexBindingDescriptionCount = 0; // Is set later with `VkVertexInputBindingDescription`
-        vertexInputInfo.vertexAttributeDescriptionCount = 0; // If no vertex attributes are available
+        vertexInputInfo.vertexAttributeDescriptionCount = static_cast<uint32_t>(vertexAttributes.size());
+        vertexInputInfo.pVertexAttributeDescriptions = vertexAttributes.data();
 
         // Input assembly
         VkPipelineInputAssemblyStateCreateInfo inputAssembly = {};

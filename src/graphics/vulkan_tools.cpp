@@ -132,7 +132,7 @@ namespace time_kill::graphics {
         if (filename.ends_with(".tese.spv")) return VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT;
         if (filename.ends_with(".comp.spv")) return VK_SHADER_STAGE_COMPUTE_BIT;
 
-        // Optional: Ray-Tracing Shader-Typen
+        // Optional: Ray-Tracing Shader-Types
         if (filename.ends_with(".rgen.spv")) return VK_SHADER_STAGE_RAYGEN_BIT_KHR;
         if (filename.ends_with(".rahit.spv")) return VK_SHADER_STAGE_ANY_HIT_BIT_KHR;
         if (filename.ends_with(".rchit.spv")) return VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR;
@@ -148,8 +148,9 @@ namespace time_kill::graphics {
         const String& filename
     ) {
         SpvReflectShaderModule module;
-        SpvReflectResult result = spvReflectCreateShaderModule(spirvCode.size(), spirvCode.data(), &module);
-        if (result != SPV_REFLECT_RESULT_SUCCESS) {
+        if (const SpvReflectResult result =
+            spvReflectCreateShaderModule(spirvCode.size(), spirvCode.data(), &module);
+            result != SPV_REFLECT_RESULT_SUCCESS) {
             throw std::runtime_error("Failed to reflect SPIR-V vertex shader: " + filename);
         }
 
@@ -159,10 +160,10 @@ namespace time_kill::graphics {
         Vector<SpvReflectInterfaceVariable*> inputVars(inputVarCount);
         spvReflectEnumerateInputVariables(&module, &inputVarCount, inputVars.data());
 
-        Vector<VkVertexInputAttributeDescription> attributes(inputVarCount);
+        Vector<VkVertexInputAttributeDescription> attributes;
         for (const auto* var : inputVars) {
             if (var->location == UINT32_MAX) {
-                continue;
+                continue; // Ignore unused attributes
             }
 
             VkVertexInputAttributeDescription attribute = {};

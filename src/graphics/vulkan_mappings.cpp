@@ -72,6 +72,20 @@ namespace time_kill::graphics {
             {VK_FORMAT_D32_SFLOAT_S8_UINT, "VK_FORMAT_D32_SFLOAT_S8_UINT"},
             {VK_FORMAT_S8_UINT, "VK_FORMAT_S8_UINT"}
         };
+        shaderStageMap_ = {
+            { VK_SHADER_STAGE_VERTEX_BIT, "VK_SHADER_STAGE_VERTEX_BIT" },
+            { VK_SHADER_STAGE_FRAGMENT_BIT, "VK_SHADER_STAGE_FRAGMENT_BIT" },
+            { VK_SHADER_STAGE_GEOMETRY_BIT, "VK_SHADER_STAGE_GEOMETRY_BIT" },
+            { VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT, "VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT" },
+            { VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT, "VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT" },
+            { VK_SHADER_STAGE_COMPUTE_BIT, "VK_SHADER_STAGE_COMPUTE_BIT" },
+            { VK_SHADER_STAGE_RAYGEN_BIT_KHR, "VK_SHADER_STAGE_RAYGEN_BIT_KHR" },
+            { VK_SHADER_STAGE_ANY_HIT_BIT_KHR, "VK_SHADER_STAGE_ANY_HIT_BIT_KHR" },
+            { VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR, "VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR" },
+            { VK_SHADER_STAGE_MISS_BIT_KHR, "VK_SHADER_STAGE_MISS_BIT_KHR" },
+            { VK_SHADER_STAGE_INTERSECTION_BIT_KHR, "VK_SHADER_STAGE_INTERSECTION_BIT_KHR" },
+            { VK_SHADER_STAGE_CALLABLE_BIT_KHR, "VK_SHADER_STAGE_CALLABLE_BIT_KHR" }
+        };
     }
 
     String VulkanMappings::getFormatDescription(const VkFormat format) const {
@@ -93,5 +107,10 @@ namespace time_kill::graphics {
             return it->second;
         }
         return "Unknown DepthFormat";
+    }
+
+    String VulkanMappings::getShaderStageDescription(const VkShaderStageFlagBits stage) const {
+        const auto it = shaderStageMap_.find(stage);
+        return (it != shaderStageMap_.end()) ? it->second : "Unknown Shader Stage";
     }
 }
