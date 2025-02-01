@@ -117,4 +117,8 @@ namespace time_kill::core {
     void Window::getFramebufferSize(int& width, int& height) const {
         glfwGetFramebufferSize(window_.get(), &width, &height);
     }
+
+    graphics::FramebufferSize Window::getFramebufferSize() const {
+        return graphics::FramebufferSize(width_, height_);
+    }
 }

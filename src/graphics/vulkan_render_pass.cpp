@@ -3,6 +3,7 @@
 #include <array>
 
 namespace time_kill::graphics {
+    // ReSharper disable once CppParameterNamesMismatch
     VulkanRenderPass::VulkanRenderPass(VulkanResources& resources) : resources_(resources) {}
 
     VulkanRenderPass::~VulkanRenderPass() {
@@ -28,7 +29,7 @@ namespace time_kill::graphics {
         depthAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
         depthAttachment.finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 
-        std::array<VkAttachmentDescription, 2> attachments = {colorAttachment, depthAttachment};
+        const std::array<VkAttachmentDescription, 2> attachments = {colorAttachment, depthAttachment};
 
         VkAttachmentReference colorAttachmentRef = {};
         colorAttachmentRef.attachment = 0;

@@ -15,11 +15,12 @@ const std::vector<const char*> DeviceExtensions = {
 };
 
 namespace time_kill::graphics {
-    VulkanContext::VulkanContext(const core::Window& window, const bool debugEnabled)
-        : debugEnabled_(debugEnabled),
+    VulkanContext::VulkanContext(const core::Window& window, const VulkanConfiguration& configuration)
+        : debugEnabled_(configuration.debugEnabled),
           debugMessenger_(nullptr),
           swapchain_(resources_),
-          renderPass_(resources_) {
+          renderPass_(resources_),
+          graphicsPipeline_(resources_) {
 
         if (!glfwVulkanSupported()) {
             throw std::runtime_error("Vulkan is not supported by GLFW");
@@ -33,6 +34,7 @@ namespace time_kill::graphics {
 
         swapchain_.createSwapchain(window);
         renderPass_.createRenderPass();
+        graphicsPipeline_.createGraphicsPipeline(window, configuration);
     }
 
     VulkanContext::~VulkanContext() {

@@ -80,6 +80,10 @@ namespace time_kill {
     using i64 = std::int64_t;
     using usize = std::size_t;
 
+    // Float types
+    using f32 = float;
+    using f64 = double;
+
     // Debugger Helper
     using Error = std::system_error;
 }

@@ -2,6 +2,7 @@
 
 #include "prerequisites.hpp"
 #include "window_config.hpp"
+#include "graphics/graphic_types.hpp"
 
 // Include Vulkan through GLFW
 #define GLFW_INCLUDE_VULKAN
@@ -61,6 +62,9 @@ namespace time_kill::core {
 
         // Retrieves the framebuffer dimensions.
         void getFramebufferSize(int& width, int& height) const;
+
+        // Returns the framebuffer dimensions as a struct.
+        [[nodiscard]] graphics::FramebufferSize getFramebufferSize() const;
 
     private:
         friend class graphics::VulkanContext;

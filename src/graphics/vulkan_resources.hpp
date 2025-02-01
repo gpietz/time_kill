@@ -31,5 +31,8 @@ namespace time_kill::graphics {
 
         //=== Render Pass
         VkRenderPass renderPass = VK_NULL_HANDLE;
+
+        //=== Graphics Pipeline
+        VkPipeline graphicsPipeline = VK_NULL_HANDLE;
     };
 }

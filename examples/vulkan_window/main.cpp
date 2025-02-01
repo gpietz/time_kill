@@ -1,22 +1,31 @@
 #include "core/window.hpp"
+#include "core/logger.hpp"
 #include "graphics/vulkan_context.hpp"
+#include "graphics/vulkan_configuration.hpp"
 #include <iostream>
 #include <sstream>
-
-#include "core/logger.hpp"
 
 constexpr auto WINDOW_TITLE = "Vulkan Window Example";
 
 int main() {
     try {
+        using namespace time_kill;
+        using namespace time_kill::core;
+        using namespace time_kill::graphics;
+
         // Initialize file logging
-        time_kill::log_init("vulkan_window.log", true);
-        time_kill::log_enable_trace(true);
-        time_kill::log_set_date_separator(time_kill::core::DateSeparator::Period);
+        log_init("vulkan_window.log", true);
+        log_enable_trace(true);
+        log_set_date_separator(time_kill::core::DateSeparator::Period);
+
+        // Create a Vulkan configuration with debug messages enabled
+        VulkanConfiguration vulkanConfig = {};
+        vulkanConfig.debugEnabled = true;
+        vulkanConfig.setRootDirectory("../../../");
 
         // Create a window instance with vulkan context
-        time_kill::core::Window window(800, 600, WINDOW_TITLE, true);
-        time_kill::graphics::VulkanContext vulkanContext(window, true);
+        Window window(800, 600, WINDOW_TITLE, true);
+        VulkanContext vulkanContext(window, vulkanConfig);
 
         // Center the window on screen
         window.centerOnScreen();

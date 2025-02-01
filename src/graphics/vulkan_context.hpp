@@ -6,6 +6,8 @@
 #include "vulkan_resources.hpp"
 #include "vulkan_swapchain.hpp"
 #include "vulkan_render_pass.hpp"
+#include "vulkan_graphics_pipeline.hpp"
+#include "vulkan_configuration.hpp"
 #include <vulkan/vulkan.h>
 
 namespace time_kill::graphics {
@@ -28,8 +30,8 @@ namespace time_kill::graphics {
     public:
         //! @brief Constructs a VulkanContext.
         //! @param window The window to create a surface for.
-        //! @param debugEnabled Enables Vulkan validation layers and debug messenger if true. Defaults to false.
-        explicit VulkanContext(const core::Window& window, bool debugEnabled = false);
+        //! @param configuration
+        explicit VulkanContext(const core::Window& window, const VulkanConfiguration& configuration);
 
         //! @brief Destroys the VulkanContext and releases all allocated resources.
         ~VulkanContext();
@@ -90,5 +92,6 @@ namespace time_kill::graphics {
         VulkanResources resources_;
         VulkanSwapchain swapchain_;
         VulkanRenderPass renderPass_;
+        VulkanGraphicsPipeline graphicsPipeline_;
     };
 }
