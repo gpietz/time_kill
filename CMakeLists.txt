@@ -14,13 +14,13 @@ if (NOT Vulkan_FOUND)
 endif()
 
 # SPIRV-Reflect
-#FetchContent_Declare(
-#        SPIRV-Reflect
-#        GIT_REPOSITORY https://github.com/KhronosGroup/SPIRV-Reflect.git
-#        GIT_TAG main
-#)
-#message(STATUS ">>> Fetching SPIRV-Reflect...")
-#FetchContent_MakeAvailable(SPIRV-Reflect)
+FetchContent_Declare(
+        SPIRV-Reflect
+        GIT_REPOSITORY https://github.com/KhronosGroup/SPIRV-Reflect.git
+        GIT_TAG main
+)
+message(STATUS ">>> Fetching SPIRV-Reflect...")
+FetchContent_MakeAvailable(SPIRV-Reflect)
 
 # Debug: Check if FetchContent actually worked
 message(STATUS ">>> Checking SPIRV-Reflect Directories:")
