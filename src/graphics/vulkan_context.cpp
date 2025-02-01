@@ -32,7 +32,7 @@ namespace time_kill::graphics {
         createLogicalDevice(window);
 
         swapchain_.createSwapchain(window);
-        //renderPass_.createRenderPass();
+        renderPass_.createRenderPass();
     }
 
     VulkanContext::~VulkanContext() {

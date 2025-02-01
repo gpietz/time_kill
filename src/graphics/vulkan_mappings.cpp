@@ -64,7 +64,14 @@ namespace time_kill::graphics {
             {VK_PRESENT_MODE_SHARED_DEMAND_REFRESH_KHR, "VK_PRESENT_MODE_SHARED_DEMAND_REFRESH_KHR"},
             {VK_PRESENT_MODE_SHARED_CONTINUOUS_REFRESH_KHR, "VK_PRESENT_MODE_SHARED_CONTINUOUS_REFRESH_KHR"}
         };
-
+        depthFormatMap_ = {
+            {VK_FORMAT_D16_UNORM, "VK_FORMAT_D16_UNORM"},
+            {VK_FORMAT_D16_UNORM_S8_UINT, "VK_FORMAT_D16_UNORM_S8_UINT"},
+            {VK_FORMAT_D24_UNORM_S8_UINT, "VK_FORMAT_D24_UNORM_S8_UINT"},
+            {VK_FORMAT_D32_SFLOAT, "VK_FORMAT_D32_SFLOAT"},
+            {VK_FORMAT_D32_SFLOAT_S8_UINT, "VK_FORMAT_D32_SFLOAT_S8_UINT"},
+            {VK_FORMAT_S8_UINT, "VK_FORMAT_S8_UINT"}
+        };
     }
 
     String VulkanMappings::getFormatDescription(const VkFormat format) const {
@@ -79,5 +86,12 @@ namespace time_kill::graphics {
             return it->second;
         }
         return "Unknown PresentMode";
+    }
+
+    String VulkanMappings::getDepthFormatDescription(const VkFormat format) const {
+        if (const auto it = depthFormatMap_.find(format); it != depthFormatMap_.end()) {
+            return it->second;
+        }
+        return "Unknown DepthFormat";
     }
 }

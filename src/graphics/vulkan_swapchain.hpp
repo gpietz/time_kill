@@ -22,6 +22,8 @@ namespace time_kill::graphics {
         static VkPresentModeKHR chooseSwapPresentMode(const Vector<VkPresentModeKHR>& availablePresentModes);
         static VkExtent2D chooseSwapExtent(const VkSurfaceCapabilitiesKHR& capabilities, const core::Window& window);
 
+        [[nodiscard]] VkFormat findDepthFormat() const;
+
         VulkanResources& resources_;
     };
 } // time_kill

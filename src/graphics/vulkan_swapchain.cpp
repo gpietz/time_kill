@@ -123,6 +123,12 @@ namespace time_kill::graphics {
 
         // Create image views
         createImageViews();
+
+        // Find suitable depth format
+        res.depthFormat = findDepthFormat();
+        if (res.depthFormat != VK_FORMAT_UNDEFINED && log_is_debug_enabled()) {
+            log_debug(std::format("Picked depth format: {}", mappings.getDepthFormatDescription(res.depthFormat)));
+        }
     }
 
     void VulkanSwapchain::destroySwapchain() const {
@@ -252,5 +258,29 @@ namespace time_kill::graphics {
         actualExtent.height = std::clamp(actualExtent.height, capabilities.minImageExtent.height, capabilities.maxImageExtent.height);
 
         return actualExtent;
+    }
+
+    VkFormat VulkanSwapchain::findDepthFormat() const {
+        const Vector<VkFormat> candidates = {
+            VK_FORMAT_D16_UNORM,
+            VK_FORMAT_D16_UNORM_S8_UINT,
+            VK_FORMAT_D24_UNORM_S8_UINT,
+            VK_FORMAT_D32_SFLOAT,
+            VK_FORMAT_D32_SFLOAT_S8_UINT,
+            VK_FORMAT_S8_UINT
+        };
+
+        const auto res = resources_;
+
+        for (const auto format : candidates) {
+            VkFormatProperties formatProperties;
+            vkGetPhysicalDeviceFormatProperties(res.physicalDevice, format, &formatProperties);
+
+            if (formatProperties.optimalTilingFeatures & VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT) {
+                return format;
+            }
+        }
+
+        throw std::runtime_error("Failed to find a suitable depth format!");
     }
 }

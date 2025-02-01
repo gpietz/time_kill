@@ -11,9 +11,11 @@ namespace time_kill::graphics {
 
         [[nodiscard]] String getFormatDescription(VkFormat format) const;
         [[nodiscard]] String getPresentModeDescription(VkPresentModeKHR presentMode) const;
+        [[nodiscard]] String getDepthFormatDescription(VkFormat) const;
 
     private:
         std::unordered_map<VkFormat, String> formatMap_;
         std::unordered_map<VkPresentModeKHR, String> presentModeMap_;
+        std::unordered_map<VkFormat, String> depthFormatMap_;
     };
 }

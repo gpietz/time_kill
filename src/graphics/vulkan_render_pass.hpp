@@ -9,8 +9,8 @@ namespace time_kill::graphics {
           explicit VulkanRenderPass(VulkanResources& vulkanResources);
           ~VulkanRenderPass();
 
-          void createRenderPass();
-          void destroyRenderPass();
+          void createRenderPass() const;
+          void destroyRenderPass() const;
 
     private:
           VulkanResources& resources_;
