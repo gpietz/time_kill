@@ -34,5 +34,6 @@ namespace time_kill::graphics {
 
         //=== Graphics Pipeline
         VkPipeline graphicsPipeline = VK_NULL_HANDLE;
+        VkPipelineLayout graphicsPipelineLayout = VK_NULL_HANDLE;
     };
 }

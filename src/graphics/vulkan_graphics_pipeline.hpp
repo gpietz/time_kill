@@ -18,6 +18,7 @@ namespace time_kill::graphics {
         ~VulkanGraphicsPipeline();
 
         void createGraphicsPipeline(const core::Window& window, const VulkanConfiguration& configuration) const;
+        void destroyGraphicsPipeline() const;
 
     private:
 

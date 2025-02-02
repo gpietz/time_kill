@@ -2,6 +2,7 @@
 #include "core/logger.hpp"
 #include <filesystem>
 #include <spirv_reflect.h>
+#include <unordered_set>
 
 namespace time_kill::graphics {
     bool checkValidationLayerSupport(const std::vector<const char*>& validationLayers) {
@@ -143,6 +144,27 @@ namespace time_kill::graphics {
         throw std::runtime_error("Unknown shader type: " + filename);
     }
 
+    template <typename T, typename F>
+    Vector<T*> spvReflectEnumerateVariables(SpvReflectShaderModule& module, F enumerateFunc) {
+        u32 count = 0;
+        enumerateFunc(&module, &count, nullptr);
+
+        Vector<T*> variables;
+        variables.reserve(count);
+        enumerateFunc(&module, &count, variables.data());
+
+        return variables;
+    }
+
+    void throwDuplicateLocationError(const String& filename, const u32 location, const bool input) {
+        std::ostringstream oss;
+        oss << "SPIRV-Reflect: Duplicate " << (input ? "input" : "output")
+            << " attribute location detected!\n"
+            << "File: " << filename << "\n"
+            << "Location: " << location << "\n";
+        throw std::runtime_error(oss.str());
+    }
+
     Vector<VkVertexInputAttributeDescription> VulkanTools::parseVertexInputAttributes(
         const Vector<char>& spirvCode,
         const String& filename
@@ -154,26 +176,37 @@ namespace time_kill::graphics {
             throw std::runtime_error("Failed to reflect SPIR-V vertex shader: " + filename);
         }
 
-        u32 inputVarCount = 0;
-        spvReflectEnumerateInputVariables(&module, &inputVarCount, nullptr);
-
-        Vector<SpvReflectInterfaceVariable*> inputVars(inputVarCount);
-        spvReflectEnumerateInputVariables(&module, &inputVarCount, inputVars.data());
+        // Get input and output variables
+        const auto inputVars =
+            spvReflectEnumerateVariables<SpvReflectInterfaceVariable>(module, spvReflectEnumerateInputVariables);
+        const auto outputVars =
+            spvReflectEnumerateVariables<SpvReflectInterfaceVariable>(module, spvReflectEnumerateOutputVariables);
 
         Vector<VkVertexInputAttributeDescription> attributes;
-        for (const auto* var : inputVars) {
-            if (var->location == UINT32_MAX) {
-                continue; // Ignore unused attributes
+        std::unordered_set<u32> inputLocations;
+        std::unordered_set<u32> outputLocations;
+
+        auto checkDuplicate = [&](const auto& vars, auto& locationSet, const bool isInput) {
+            for (const auto& var : vars) {
+                if (var->built_in != -1) continue;
+                if (!locationSet.insert(var->location).second) {
+                    spvReflectDestroyShaderModule(&module);
+                    throwDuplicateLocationError(filename, var->location, isInput);
+                }
+
+                if (isInput) {
+                    VkVertexInputAttributeDescription attribute = {};
+                    attribute.location = var->location;
+                    attribute.binding = 0;
+                    attribute.format = static_cast<VkFormat>(var->format);
+                    attribute.offset = 0;
+                    attributes.push_back(attribute);
+                }
             }
+        };
 
-            VkVertexInputAttributeDescription attribute = {};
-            attribute.location = var->location;
-            attribute.binding = 0;
-            attribute.format = static_cast<VkFormat>(var->format);
-            attribute.offset = 0;
-
-            attributes.push_back(attribute);
-        }
+        checkDuplicate(inputVars, inputLocations, true);
+        checkDuplicate(outputVars, outputLocations, false);
 
         spvReflectDestroyShaderModule(&module);
         return attributes;

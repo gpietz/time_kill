@@ -142,11 +142,11 @@ namespace time_kill::graphics {
         vkDeviceWaitIdle(res.logicalDevice);
 
         if (!res.swapchainImages.empty()) {
-            log_debug(std::format("Destroying {} image views.", res.swapchainImages.size()));
             for (auto const imageView : res.swapchainImageViews) {
                 vkDestroyImageView(res.logicalDevice, imageView, nullptr);
             }
             res.swapchainImageViews.clear();
+            log_debug(std::format("Destroyed {} image views.", res.swapchainImages.size()));
         } else {
             log_debug("No image views to destroy.");
         }

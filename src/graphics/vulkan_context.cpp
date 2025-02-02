@@ -41,6 +41,9 @@ namespace time_kill::graphics {
         auto& res = resources_;
         auto& log = core::Logger::getInstance();
 
+        if (res.graphicsPipeline != VK_NULL_HANDLE) {
+            graphicsPipeline_.destroyGraphicsPipeline();
+        }
         if (res.renderPass != VK_NULL_HANDLE) {
             renderPass_.destroyRenderPass();
         }

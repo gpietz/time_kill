@@ -11,7 +11,9 @@
 namespace time_kill::graphics {
     VulkanGraphicsPipeline::VulkanGraphicsPipeline(VulkanResources& resources) : resources_(resources) {}
 
-    VulkanGraphicsPipeline::~VulkanGraphicsPipeline() {}
+    VulkanGraphicsPipeline::~VulkanGraphicsPipeline() {
+        destroyGraphicsPipeline();
+    }
 
     void VulkanGraphicsPipeline::createGraphicsPipeline(const core::Window& window, const VulkanConfiguration& configuration) const {
         // Retrieve all SPIR-V shader files
@@ -118,7 +120,7 @@ namespace time_kill::graphics {
         rasterizer.frontFace = VK_FRONT_FACE_CLOCKWISE;
         rasterizer.depthBiasEnable = VK_FALSE;
 
-        // Multisampmling (no MSAS for now)
+        // Multisampling (no MSAA for now)
         VkPipelineMultisampleStateCreateInfo multisampling = {};
         multisampling.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
         multisampling.sampleShadingEnable = VK_FALSE;
@@ -227,5 +229,19 @@ namespace time_kill::graphics {
         }
 
         return shaderModule;
+    }
+
+    void VulkanGraphicsPipeline::destroyGraphicsPipeline() const {
+        auto& res = resources_;
+
+        if (res.graphicsPipeline != VK_NULL_HANDLE) {
+            vkDestroyPipeline(res.logicalDevice, res.graphicsPipeline, nullptr);
+            res.graphicsPipeline = VK_NULL_HANDLE;
+        }
+
+        if (res.graphicsPipelineLayout != VK_NULL_HANDLE) {
+            vkDestroyPipelineLayout(res.logicalDevice, res.graphicsPipelineLayout, nullptr);
+            res.graphicsPipelineLayout = VK_NULL_HANDLE;
+        }
     }
 }
